@@ -6,7 +6,7 @@ Intelligently moves files between storage tiers based on frequency of use, file 
 
 ## Installation
 ```
-yum install https://github.com/45Drives/autotier/releases/download/v0.4-beta/autotier-0.4-1.el7.x86_64.rpm
+yum install https://github.com/45Drives/autotier/releases/download/v0.6.1-beta/autotier-0.6.1-1.el7.x86_64.rpm
 ```
 
 For apt-get based systems, or building from source:
@@ -28,7 +28,48 @@ You will need to create the `/etc/autotier.conf` config file, and setup a cronta
 
 
 ## Usage
-The RPM install package includes a systemd unit and timer file. Configure `autotier` as described below and enable the daemon with `systemctl enable autotier.timer` The default configuration file is `/etc/autotier.conf`, but this can be changed by passing the `-c`/`--config` flag followed by the path to the alternate configuration file. The first defined tier should be the working tier that is exported. So far, `samba` is the only sharing tool that seems to work with this software. `nfs` is too literal, and has no capability of following wide symlinks.
+The RPM install package includes a systemd unit file. Configure `autotier` as described below and enable the daemon with `systemctl enable autotier` The default configuration file is `/etc/autotier.conf`, but this can be changed by passing the `-c`/`--config` flag followed by the path to the alternate configuration file. The first defined tier should be the working tier that is exported. So far, `samba` is the only sharing tool that seems to work with this software. `nfs` is too literal, and has no capability of following wide symlinks.
+
+### Command Line Tools
+```
+autotier usage:
+  autotier <command> <flags> [{-c|--config} </path/to/config>]
+commands:
+  oneshot      - execute tiering only once
+  run          - start tiering of files as daemon
+  status       - list info about defined tiers
+  pin <"tier name"> <"/path/to/file">...
+               - pin file(s) to tier using tier name in config file or full path to *tier root*
+               - if a path to a directory is passed, all top-level files will be pinned
+  unpin </path/to/file>...
+               - remove pin from file(s)
+  config       - display current configuration file
+  list-pins    - show all pinned files
+  list-popularity
+               - print list of all tier files sorted by frequency of use
+  help         - display this message
+flags:
+  -c --config <path/to/config>
+               - override configuration file path (default /etc/autotier.conf)
+```
+Examples:  
+Run tiering of files in daemon mode:  
+`autotier run`  
+Run tiering of files only once:  
+`autotier oneshot`  
+Show status of configured tiers:  
+`autotier status`  
+Pin a file to a tier with \<Tier Name\>:  
+`autotier pin "<Tier Name>" /path/to/file`  
+Pin multiple files:  
+`autotier pin "<Tier Name>" /path/to/file1 /path/to/dir/* /bash/expansion/**/*`  
+`find /path -type f -print | xargs autotier pin "<Tier Name>"`  
+Remove pins:  
+`autotier unpin /path/to/file`  
+`find /path -type f -print | xargs autotier unpin`  
+List pinned files:  
+`autotier list-pins`
+
 
 ## Configuration
 ### Autotier Config
@@ -37,6 +78,7 @@ For global configuration of `autotier`, options are placed below the `[Global]` 
 ```
 [Global]
 LOG_LEVEL=2
+TIER_PERIOD=1000    # number of seconds between file move batches
 ```
 The global config section can be placed before, after, or between tier definitions.
 #### Tier Config
@@ -51,7 +93,8 @@ Below is a complete example of a configuration file:
 ```
 # autotier.conf
 [Global]
-LOG_LEVEL=2
+LOG_LEVEL=1
+TIER_PERIOD=1000    # number of seconds between file move batches
 
 [Fastest Tier]
 DIR=/tier_1         # fast tier storage pool
@@ -80,8 +123,6 @@ wide links = yes
 path = /path/to/fastest/tier
 # ...
 ```
-### Systemd Config
-Edit `/etc/systemd/system/autotier.timer` to set the period at which to run `autotier`. The default period is every 30 minutes. Run `systemctl daemon-reload` after editing this file.
 ## Acknowledgements
 Credits to [Stephan Brumme](https://stephan-brumme.com/) for his single-header implementation of XXHash, which is used after a file is copied to verify that there were no errors.
 ```

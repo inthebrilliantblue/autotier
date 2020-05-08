@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Joshua Boudreau
+    Copyright (C) 2019-2020 Joshua Boudreau
     
     This file is part of autotier.
 
@@ -19,7 +19,8 @@
 
 #include "config.hpp"
 #include "alert.hpp"
-#include "crawl.hpp"
+#include "tierEngine.hpp"
+#include "tier.hpp"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -77,7 +78,7 @@ void Config::load(const fs::path &config_path, std::vector<Tier> &tiers){
     exit(1);
   }
   
-  if(log_lvl >= 2) dump(std::cout, tiers);
+  //if(log_lvl >= 2) dump(std::cout, tiers);
 }
 
 int Config::load_global(std::fstream &config_file, std::string &id){
@@ -106,6 +107,12 @@ int Config::load_global(std::fstream &config_file, std::string &id){
       }catch(std::invalid_argument){
         this->log_lvl = ERR;
       }
+    }else if(key == "TIER_PERIOD"){
+      try{
+        this->period = stoul(value);
+      }catch(std::invalid_argument){
+        this->period = ERR;
+      }
     } // else if ...
   }
   // if here, EOF reached
@@ -126,6 +133,7 @@ void Config::generate_config(std::fstream &file){
   "# autotier config\n"
   "[Global]            # global settings\n"
   "LOG_LEVEL=1         # 0 = none, 1 = normal, 2 = debug\n"
+  "TIER_PERIOD=1000    # number of seconds between file move batches\n"
   "\n"
   "[Tier 1]\n"
   "DIR=                # full path to tier storage pool\n"
@@ -146,6 +154,14 @@ bool Config::verify(const std::vector<Tier> &tiers){
     errors = true;
   }else if(tiers.size() == 1){
     error(ONE_TIER);
+    errors = true;
+  }
+  if(log_lvl == ERR){
+    error(LOG_LVL);
+    errors = true;
+  }
+  if(period == ERR){
+    error(PERIOD);
     errors = true;
   }
   for(Tier t : tiers){

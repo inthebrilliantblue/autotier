@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Joshua Boudreau
+    Copyright (C) 2019-2020 Joshua Boudreau
     
     This file is part of autotier.
 
@@ -17,27 +17,27 @@
     along with autotier.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "tier.hpp"
 
-#include <iostream>
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <sys/statvfs.h>
 
-#define DEFAULT_CONFIG_PATH "/etc/autotier.conf"
-#define ERR -1
-#define DISABLED -999
+unsigned long Tier::get_capacity(){
+  /*
+   * Returns maximum number of bytes
+   * available in a tier
+   */
+  struct statvfs fs_stats;
+  if((statvfs(dir.c_str(), &fs_stats) == -1))
+    return -1;
+  return (fs_stats.f_blocks * fs_stats.f_bsize);
+}
 
-class Tier; // forward declaration
-
-class Config{
-private:
-  void generate_config(std::fstream &file);
-  bool verify(const std::vector<Tier> &tiers);
-public:
-  int log_lvl;
-  void load(const fs::path &config_path, std::vector<Tier> &tiers);
-  int load_global(std::fstream &config_file, std::string &id);
-  void dump(std::ostream &os, const std::vector<Tier> &tiers) const;
-};
-
-void discard_comments(std::string &str);
+unsigned long Tier::get_usage(){
+  /*
+   * Returns number of free bytes in a tier
+   */
+  struct statvfs fs_stats;
+  if((statvfs(dir.c_str(), &fs_stats) == -1))
+    return -1;
+  return (fs_stats.f_blocks - fs_stats.f_bfree) * fs_stats.f_bsize;
+}

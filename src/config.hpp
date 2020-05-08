@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Joshua Boudreau
+    Copyright (C) 2019-2020 Joshua Boudreau
     
     This file is part of autotier.
 
@@ -19,15 +19,26 @@
 
 #pragma once
 
-#include <string>
+#include "tier.hpp"
 
+#include <iostream>
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+
+#define DEFAULT_CONFIG_PATH "/etc/autotier.conf"
 #define ERR -1
+#define DISABLED -999
 
-extern int log_lvl;
+class Config{
+private:
+  void generate_config(std::fstream &file);
+  bool verify(const std::vector<Tier> &tiers);
+public:
+  int log_lvl = ERR;
+  unsigned long period = ERR;
+  void load(const fs::path &config_path, std::vector<Tier> &tiers);
+  int load_global(std::fstream &config_file, std::string &id);
+  void dump(std::ostream &os, const std::vector<Tier> &tiers) const;
+};
 
-#define NUM_ERRORS 7
-enum Error{LOAD_CONF, TIER_DNE, NO_FIRST_TIER, NO_TIERS, ONE_TIER, WATERMARK_ERR, SETX};
-
-void error(enum Error error);
-
-void Log(std::string msg, int lvl);
+void discard_comments(std::string &str);

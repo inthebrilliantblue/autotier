@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Joshua Boudreau
+    Copyright (C) 2019-2020 Joshua Boudreau
     
     This file is part of autotier.
 
@@ -30,7 +30,10 @@ std::string errors[NUM_ERRORS] = {
   "No tiers defined in config file.",
   "Only one tier defined in config file, two or more are needed.",
   "WATERMARK must be a positive integer between 0 and 100.",
-  "Error setting extended attribute."
+  "Error setting extended attribute.",
+  "Error reading log level.",
+  "Error reading tier period.",
+  "Error constructing mutex file path."
 };
 
 void error(enum Error error){

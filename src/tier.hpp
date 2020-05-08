@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Joshua Boudreau
+    Copyright (C) 2019-2020 Joshua Boudreau
     
     This file is part of autotier.
 
@@ -17,17 +17,28 @@
     along with autotier.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
-#include "crawl.hpp"
-#include <iostream>
+#pragma once
 
-inline bool config_passed(int argc, char *argv[]){
-  return (argc >= 3 && (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--config") == 0));
-}
+#include "file.hpp"
 
-int main(int argc, char *argv[]){
-  fs::path config_path = (config_passed(argc, argv))? argv[2] : DEFAULT_CONFIG_PATH;
-  TierEngine autotier(config_path);
-  autotier.begin();
-  return 0;
-}
+class File;
+
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+
+class Tier{
+public:
+  unsigned long watermark_bytes;
+  int watermark;
+  fs::path dir;
+  std::string id;
+  std::list<File *> incoming_files;
+  Tier(std::string id_){
+    id = id_;
+  }
+  unsigned long get_capacity();
+  unsigned long get_usage();
+  void cleanup(void){
+    incoming_files.erase(incoming_files.begin(), incoming_files.end());
+  }
+};
